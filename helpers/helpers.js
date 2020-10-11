@@ -1,35 +1,29 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 const dataFileName = (fileName) => path.join(__dirname, `../data/${fileName}`);
 
-const fileErrorHanding = (err, res) => {
-  if (err) {
-    res.status(500).send(err);
-    // eslint-disable-next-line no-useless-return
-    return;
-  }
-};
-
 const prosesDataFromFile = (res, fileName, func, req) => {
-  fs.readFile(dataFileName(fileName), { encoding: 'utf8' }, (err, data) => {
-    fileErrorHanding(err, res);
-    func(res, data, req);
-  });
+  fs.readFile(dataFileName(fileName), 'utf8')
+    .then((data) => {
+      func(res, data, req);
+    })
+    .catch(() => {
+      res.status(500).send({ message: 'Ошибка чтения файла' });
+    });
 };
 
 const resSendData = (res, data) => {
-  res.send(data);
+  res.send(JSON.parse(data));
 };
 
 const resSendUser = (res, data, req) => {
-  // eslint-disable-next-line no-underscore-dangle
   const user = JSON.parse(data).find((item) => item._id === req.params.id);
   if (!user) {
-    res.status(404).send('{ "message": "Нет пользователя с таким id" }');
+    res.status(404).send({ message: 'Нет пользователя с таким id' });
     return;
   }
-  res.send(JSON.stringify(user));
+  res.send(user);
 };
 
 // Экспортируемые функции для роутинга
